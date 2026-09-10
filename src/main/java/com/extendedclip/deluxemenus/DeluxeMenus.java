@@ -356,7 +356,7 @@ public class DeluxeMenus extends JavaPlugin {
     }
 
     private void setUpMetrics() {
-        final Metrics metrics = new Metrics(this, 445);
+        final Metrics metrics = new Metrics(this, 33953);
         metrics.addCustomChart(new SingleLineChart("menus", Menu::getLoadedMenuSize));
 
         metrics.addCustomChart(new AdvancedPie("inventory_types", () -> Menu.getAllMenus().stream()
