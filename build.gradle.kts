@@ -53,6 +53,13 @@ dependencies {
     compileOnly("org.jetbrains:annotations:26.1.0")
 }
 
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(25))
+    }
+    disableAutoTargetJvm()
+}
+
 tasks {
     shadowJar {
         relocate("org.objectweb.asm", "com.extendedclip.deluxemenus.libs.asm")
@@ -60,12 +67,6 @@ tasks {
         relocate("org.bstats", "com.extendedclip.deluxemenus.libs.bstats")
         archiveFileName.set("DeluxeMenus-${rootProject.version}.jar")
     }
-    java {
-        sourceCompatibility = JavaVersion.VERSION_25
-        targetCompatibility = JavaVersion.VERSION_25
-        disableAutoTargetJvm()
-    }
-
     processResources {
         filesMatching("plugin.yml") {
             expand("version" to rootProject.version)
