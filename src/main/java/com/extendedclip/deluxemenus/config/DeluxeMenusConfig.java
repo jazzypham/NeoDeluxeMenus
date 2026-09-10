@@ -401,17 +401,33 @@ public class DeluxeMenusConfig {
             pre = "";
         }
 
-        if (!c.contains(pre + "menu_title")) {
+        if (!c.contains(pre + "menu_title") && !c.contains(pre + "menu_titles")) {
             plugin.debug(DebugLevel.HIGHEST, Level.SEVERE, "Menu title for menu: " + key + " is not present!", "Skipping menu: " + key);
             return;
         }
 
         String title = null;
 
-        if (c.isString(pre + "menu_title")) {
+        if (c.contains(pre + "menu_titles")) {
+            if (c.contains(pre + "menu_title")) {
+                plugin.debug(DebugLevel.HIGHEST, Level.WARNING, "Menu: " + key + " has both menu_title and menu_titles set!", "Using menu_titles and ignoring menu_title.");
+            }
+
+            if (c.isList(pre + "menu_titles")) {
+                title = String.join("", c.getStringList(pre + "menu_titles"));
+            } else if (c.isString(pre + "menu_titles")) {
+                title = c.getString(pre + "menu_titles");
+            }
+
+            if (title == null || title.isEmpty()) {
+                plugin.debug(DebugLevel.HIGHEST, Level.SEVERE, "Menu titles for menu: " + key + " is invalid!", "Skipping menu: " + key);
+                return;
+            }
+        } else if (c.isString(pre + "menu_title")) {
             title = c.getString(pre + "menu_title");
         } else if (c.isList(pre + "menu_title")) {
-            title = c.getStringList(pre + "menu_title").get(0);
+            final List<String> titles = c.getStringList(pre + "menu_title");
+            title = titles.isEmpty() ? null : titles.get(0);
         }
 
         if (title == null || title.isEmpty()) {
