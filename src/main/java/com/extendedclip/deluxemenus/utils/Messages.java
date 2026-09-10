@@ -19,6 +19,7 @@ import static net.kyori.adventure.text.Component.text;
 public enum Messages {
 
     PLUGIN_TITLE(empty()
+            .append(text("Neo", NamedTextColor.WHITE, TextDecoration.ITALIC))
             .append(text("Deluxe", NamedTextColor.GOLD, TextDecoration.BOLD))
             .append(text("Menus", NamedTextColor.YELLOW))),
 
