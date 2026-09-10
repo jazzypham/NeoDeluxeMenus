@@ -8,6 +8,7 @@ import com.extendedclip.deluxemenus.cooldown.EphemeralCooldownManager;
 import com.extendedclip.deluxemenus.dupe.DupeFixer;
 import com.extendedclip.deluxemenus.dupe.MenuItemMarker;
 import com.extendedclip.deluxemenus.hooks.*;
+import com.extendedclip.deluxemenus.inventory.PlayerInventoryHider;
 import com.extendedclip.deluxemenus.listener.PlayerListener;
 import com.extendedclip.deluxemenus.menu.Menu;
 import com.extendedclip.deluxemenus.menu.MenuItem;
@@ -22,7 +23,6 @@ import com.extendedclip.deluxemenus.utils.Messages;
 import com.extendedclip.deluxemenus.utils.VersionHelper;
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
-import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import net.kyori.adventure.text.Component;
 import org.bstats.bukkit.Metrics;
 import org.bstats.charts.AdvancedPie;
@@ -50,8 +50,8 @@ public class DeluxeMenus extends JavaPlugin {
     private PersistentMetaHandler persistentMetaHandler;
     private MenuItemMarker menuItemMarker;
     private EphemeralCooldownManager ephemeralCooldownManager;
+    private PlayerInventoryHider playerInventoryHider;
 
-    private BukkitAudiences audiences;
 
     private VaultHook vaultHook;
 
@@ -79,6 +79,9 @@ public class DeluxeMenus extends JavaPlugin {
     public void onEnable() {
         this.generalConfig.load();
 
+        // Set up first so it is never null while a Menu is being closed, including on an early disable below.
+        setUpPlayerInventoryHider();
+
         if (!hookIntoPlaceholderAPI()) {
             Bukkit.getPluginManager().disablePlugin(this);
             return;
@@ -90,8 +93,6 @@ public class DeluxeMenus extends JavaPlugin {
 
         this.ephemeralCooldownManager = new EphemeralCooldownManager(this);
         this.ephemeralCooldownManager.startSweepTask();
-
-        this.audiences = BukkitAudiences.create(this);
 
         hookIntoVault();
         setUpItemHooks();
@@ -120,9 +121,8 @@ public class DeluxeMenus extends JavaPlugin {
 
         Bukkit.getScheduler().cancelTasks(this);
 
-        if (this.audiences != null) {
-            this.audiences.close();
-            this.audiences = null;
+        if (this.playerInventoryHider != null) {
+            this.playerInventoryHider.unregister();
         }
 
         Menu.unloadForShutdown(this);
@@ -174,11 +174,11 @@ public class DeluxeMenus extends JavaPlugin {
     }
 
     public void sms(CommandSender s, Component msg) {
-        audiences().sender(s).sendMessage(msg);
+        s.sendMessage(msg);
     }
 
     public void sms(CommandSender s, Messages msg) {
-        audiences().sender(s).sendMessage(msg.message());
+        s.sendMessage(msg.message());
     }
 
     public void debug(@NotNull final DebugLevel messageDebugLevel, @NotNull final Level level, @NotNull final String... messages) {
@@ -211,11 +211,8 @@ public class DeluxeMenus extends JavaPlugin {
         return ephemeralCooldownManager;
     }
 
-    public BukkitAudiences audiences() {
-        if (this.audiences == null) {
-            throw new IllegalStateException("Tried to access Adventure when the plugin was disabled!");
-        }
-        return this.audiences;
+    public PlayerInventoryHider getPlayerInventoryHider() {
+        return playerInventoryHider;
     }
 
     public void clearCaches() {
@@ -323,6 +320,19 @@ public class DeluxeMenus extends JavaPlugin {
         if (Bukkit.getPluginManager().isPluginEnabled("SimpleItemGenerator")) {
             this.itemHooks.put("simpleitemgenerator", new SimpleItemGeneratorHook(this));
         }
+    }
+
+    private void setUpPlayerInventoryHider() {
+        this.playerInventoryHider = new PlayerInventoryHider(this);
+        this.playerInventoryHider.register();
+
+        if (this.playerInventoryHider.isAvailable()) {
+            this.debug(DebugLevel.HIGHEST, Level.INFO, "Successfully hooked into PacketEvents!");
+            return;
+        }
+
+        this.debug(DebugLevel.LOWEST, Level.INFO, "Could not hook into PacketEvents!",
+                "DeluxeMenus will continue to work but the 'hide_player_inventory' menu option will be ignored.");
     }
 
     private void setUpBungeeCordMessaging() {

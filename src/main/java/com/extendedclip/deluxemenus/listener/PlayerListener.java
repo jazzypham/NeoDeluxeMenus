@@ -60,6 +60,9 @@ public class PlayerListener extends Listener {
     public void onLeave(PlayerQuitEvent event) {
         Player player = event.getPlayer();
 
+        // Safety net in case the holder is already gone: never leave a quitting player registered with the hider.
+        plugin.getPlayerInventoryHider().unhide(player);
+
         if (Menu.isInMenu(player)) {
             Menu.closeMenu(plugin, player, false);
         }
@@ -90,6 +93,9 @@ public class PlayerListener extends Listener {
         }
 
         final Player player = (Player) event.getPlayer();
+
+        // Safety net: whatever the menu state is, a closed inventory must never stay hidden.
+        plugin.getPlayerInventoryHider().unhide(player);
 
         if (Menu.isInMenu(player)) {
             Menu.closeMenu(plugin, player, false);

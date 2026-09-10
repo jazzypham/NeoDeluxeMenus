@@ -14,6 +14,7 @@ version = "$majorVersion-$minorVersion"
 
 repositories {
     mavenCentral()
+    maven("https://repo.papermc.io/repository/maven-public/")
     maven("https://s01.oss.sonatype.org/content/repositories/snapshots/")
     maven("https://repo.extendedclip.com/content/repositories/placeholderapi/")
     maven("https://repo.glaremasters.me/repository/public/")
@@ -21,11 +22,12 @@ repositories {
     maven("https://repo.momirealms.net/releases/")
     maven("https://repo.nexomc.com/releases/")
     maven("https://repo.oraxen.com/releases")
+    maven("https://repo.codemc.io/repository/maven-releases/")
     maven("https://jitpack.io")
 }
 
 dependencies {
-    compileOnly(libs.spigot)
+    compileOnly(libs.paper)
 
     compileOnly(libs.vault)
     compileOnly(libs.authlib)
@@ -41,12 +43,11 @@ dependencies {
     compileOnly(libs.mmoitems)
     compileOnly(libs.score)
     compileOnly(libs.sig)
+    compileOnly(libs.packetevents)
 
     compileOnly(libs.papi)
 
     implementation(libs.nashorn)
-    implementation(libs.adventure.platform)
-    implementation(libs.adventure.minimessage)
     implementation(libs.bstats)
 
     compileOnly("org.jetbrains:annotations:26.1.0")
@@ -56,13 +57,12 @@ tasks {
     shadowJar {
         relocate("org.objectweb.asm", "com.extendedclip.deluxemenus.libs.asm")
         relocate("org.openjdk.nashorn", "com.extendedclip.deluxemenus.libs.nashorn")
-        relocate("net.kyori", "com.extendedclip.deluxemenus.libs.adventure")
         relocate("org.bstats", "com.extendedclip.deluxemenus.libs.bstats")
         archiveFileName.set("DeluxeMenus-${rootProject.version}.jar")
     }
     java {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_25
+        targetCompatibility = JavaVersion.VERSION_25
         disableAutoTargetJvm()
     }
 

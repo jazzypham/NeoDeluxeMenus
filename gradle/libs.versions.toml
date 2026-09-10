@@ -1,6 +1,6 @@
 [versions]
 # Compile only
-spigot = "26.2-R0.1-SNAPSHOT"
+paper = "26.2.build.121-stable"
 vault = "1.7.1"
 authlib = "1.5.25"
 headdb = "1.3.2"
@@ -14,16 +14,15 @@ mmoitems = "6.10.1-SNAPSHOT"
 papi = "2.12.3"
 score = "5.25.3.9"
 sig = "1.10.0"
+packetevents = "2.13.0"
 bstats = "3.2.1"
 
 # Implementation
 nashorn = "15.7"
-adventure-platform = "4.4.1"
-adventure-minimessage = "5.2.0"
 
 [libraries]
 # Compile only
-spigot = { module = "org.spigotmc:spigot-api", version.ref = "spigot" }
+paper = { module = "io.papermc.paper:paper-api", version.ref = "paper" }
 vault = { module = "com.github.milkbowl:VaultAPI", version.ref = "vault" }
 authlib = { module = "com.mojang:authlib", version.ref = "authlib" }
 headdb = { module = "com.arcaniax:HeadDatabase-API", version.ref = "headdb" }
@@ -38,9 +37,8 @@ mmoitems = { module = "net.Indyuce:MMOItems-API", version.ref = "mmoitems" }
 papi = { module = "me.clip:placeholderapi", version.ref = "papi" }
 score = { module = "com.github.Ssomar-Developement:SCore", version.ref = "score" }
 sig = { module = "io.github.valerashimchuck:simpleitemgenerator-api", version.ref = "sig" }
+packetevents = { module = "com.github.retrooper:packetevents-spigot", version.ref = "packetevents" }
 
 # Implementation
 nashorn = { module = "org.openjdk.nashorn:nashorn-core", version.ref = "nashorn" }
-adventure-platform = { module = "net.kyori:adventure-platform-bukkit", version.ref = "adventure-platform" }
-adventure-minimessage = { module = "net.kyori:adventure-text-minimessage", version.ref = "adventure-minimessage" }
 bstats = { module = "org.bstats:bstats-bukkit", version.ref = "bstats" }

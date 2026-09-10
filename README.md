@@ -1,42 +1,106 @@
 [logo]: https://github.com/HelpChat/DeluxeMenus/assets/52609756/f24ac57d-98db-4d57-a723-791a2654e73f
 
-[issues]: https://github.com/HelpChat/DeluxeMenus/issues
+[upstream]: https://github.com/HelpChat/DeluxeMenus
+[upstreamSpigot]: https://www.spigotmc.org/resources/11734/
+[upstreamWiki]: https://wiki.helpch.at/helpchat-plugins/deluxemenus
+[upstreamDiscord]: https://helpch.at/discord
+
+[fork]: https://TODO-fork-repository-url
+[forkIssues]: https://TODO-fork-issue-tracker-url
+[forkDiscord]: https://TODO-discord-invite
+[forkReleases]: https://TODO-releases-download-url
+[forkDocs]: https://TODO-fork-docs-url
+
+[license]: LICENSE
 [licenseImg]: https://img.shields.io/github/license/helpchat/deluxemenus?&logo=github
-[license]: https://github.com/HelpChat/DeluxeMenus/blob/master/LICENSE
+[contributing]: CONTRIBUTING.md
 
-[bstatsImg]: https://img.shields.io/bstats/servers/445
-[bstats]: https://bstats.org/plugin/bukkit/DeluxeMenus/445
+[![logo]][upstream]
 
-[discordImg]: https://img.shields.io/discord/164280494874165248?color=5562e9&logo=discord&logoColor=white
-[discord]: https://helpch.at/discord
-[spigot]: https://www.spigotmc.org/resources/11734/
+[![licenseImg]][license]
 
-[ci]: http://ci.extendedclip.com/job/DeluxeMenus/
-[ciImg]: http://ci.extendedclip.com/buildStatus/icon?job=DeluxeMenus
+# NeoDeluxeMenus (Fork)
 
-[contributing]: https://github.com/HelpChat/DeluxeMenus/blob/main/CONTRIBUTING.md
+> **This is an unofficial fork of [DeluxeMenus][upstream] by HelpChat.**
+> It is not affiliated with, endorsed by, or supported by HelpChat or ExtendedClip.
+> Do **not** report issues with this fork to the upstream project.
 
-[![logo]][spigot]
+This fork tracks upstream and adds extra features on top, while narrowing platform support
+so the code can use modern Paper APIs directly.
 
-[![ciImg]][ci] [![bstatsImg]][bstats] [![discordImg]][discord] [![licenseImg]][license] [![GitBook](https://img.shields.io/static/v1?message=Documented%20on%20GitBook&logo=gitbook&logoColor=ffffff&label=%20&labelColor=5c5c5c&color=3F89A1)](https://wiki.helpch.at/helpchat-plugins/deluxemenus)
+## What is different in this fork
 
+- **Paper only.** Paper and Paper forks (Purpur, Folia-family forks, Pufferfish, etc.).
+  Spigot and CraftBukkit are **not supported** and will not be supported.
+- **Minecraft 1.21.11 and newer only.** Older versions are out of scope; use upstream
+  DeluxeMenus if you run an older server.
+- **Fully config compatible.** Every existing DeluxeMenus configuration works unchanged.
+  All original features behave exactly as they do in the upstream plugin, drop the jar in,
+  keep your menus. New features are strictly additive and opt-in.
+- **`hide_player_inventory`.** Per-menu option that hides the player inventory shown
+  underneath a menu. Purely visual — it only blanks the outgoing container packets, the
+  server side inventory is never touched, so items cannot be lost. Requires
+  [PacketEvents](https://github.com/retrooper/packetevents); ignored without it.
 
-# Information
-[DeluxeMenus][spigot] is the all in one inventory GUI menu plugin!
-You can create GUI menus that open with custom commands that will show stats or perform actions specific to the player who opened it. Your menus are fully configurable. You can create menus that show specific items to different players, or perform different actions depending on what javascript requirement they have for the specific slot in a certain GUI.
+## Requirements
 
-DeluxeMenus depends on [PlaceholderAPI](https://www.spigotmc.org/resources/placeholderapi.6245/).
+| Requirement | Version |
+| --- | --- |
+| Server software | Paper (or a Paper fork) |
+| Minecraft | 1.21.11 → latest |
+| Java | 25+ |
+| [PlaceholderAPI](https://www.spigotmc.org/resources/placeholderapi.6245/) | Required |
 
-## Contribute
-If you would like to contribute towards DeluxeMenus should you take a look at our [Contributing file][contributing] for the ins and outs on how you can do that and what you need to keep in mind.
+## Optional integrations
+
+Vault, HeadDatabase, HeadDB, CraftEngine, ItemsAdder, Nexo, Oraxen, ExecutableItems,
+ExecutableBlocks, SCore, SimpleItemGenerator, MMOItems.
+
+[PacketEvents](https://github.com/retrooper/packetevents) — required only by the
+`hide_player_inventory` menu option.
+
+## Installation
+
+1. Install [PlaceholderAPI](https://www.spigotmc.org/resources/placeholderapi.6245/).
+2. Download the jar from [releases][forkReleases] (or build it yourself, below).
+3. Drop it in `plugins/`, remove any existing DeluxeMenus jar, and restart the server.
+
+Migrating from upstream DeluxeMenus: swap the jar. Keep `config.yml` and `gui_menus/` as-is.
+
+## Building
+
+```bash
+./gradlew shadowJar
+```
+
+Output lands in `build/libs/`. Requires JDK 25.
+
+## Documentation
+
+Menu configuration is identical to upstream, so the official docs apply:
+
+- [DeluxeMenus Wiki][upstreamWiki]
+
+Fork-specific additions: [fork documentation][forkDocs]
 
 ## Support
-- [Issue Tracker][issues]
-- [Discord Support][discord]
 
-## Quick Links
-- [Wiki](https://wiki.helpch.at/clips-plugins/deluxemenus/)
-- [CI Server][ci]
-- [Spigot Page][spigot]
-- [Plugin Statistics][bstats]
+Support for **this fork**:
 
+- [Issue Tracker][forkIssues]
+- [Discord][forkDiscord]
+
+For questions about original DeluxeMenus behaviour, upstream resources are still the best
+reference — but please do not open fork bug reports there:
+
+- [Upstream repository][upstream] · [Upstream Discord][upstreamDiscord] · [Spigot page][upstreamSpigot]
+
+## Contributing
+
+See the [Contributing file][contributing]. Pull requests that fix upstream bugs are welcome,
+but consider sending those to [upstream][upstream] as well so everyone benefits.
+
+## Credits
+
+- Original plugin by [HelpChat][upstream] / ExtendedClip.
+- Fork maintained by **JazzyPham / MadvionLabs**.

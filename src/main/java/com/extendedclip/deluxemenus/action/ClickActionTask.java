@@ -6,8 +6,6 @@ import com.extendedclip.deluxemenus.menu.MenuHolder;
 import com.extendedclip.deluxemenus.persistentmeta.PersistentMetaHandler;
 import com.extendedclip.deluxemenus.utils.*;
 import net.kyori.adventure.text.minimessage.MiniMessage;
-import net.md_5.bungee.api.ChatMessageType;
-import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
@@ -112,19 +110,19 @@ public class ClickActionTask extends BukkitRunnable {
                 break;
 
             case MINI_MESSAGE:
-                plugin.audiences().player(player).sendMessage(MiniMessage.miniMessage().deserialize(executable));
+                player.sendMessage(MiniMessage.miniMessage().deserialize(executable));
                 break;
 
             case MINI_BROADCAST:
-                plugin.audiences().all().sendMessage(MiniMessage.miniMessage().deserialize(executable));
+                Bukkit.getServer().sendMessage(MiniMessage.miniMessage().deserialize(executable));
                 break;
 
             case MESSAGE:
-                player.sendMessage(StringUtils.color(executable));
+                player.sendMessage(StringUtils.parse(executable));
                 break;
 
             case ACTION_BAR:
-                player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(StringUtils.color(executable)));
+                player.sendActionBar(StringUtils.parse(executable));
                 break;
 
             case LOG:
@@ -156,7 +154,7 @@ public class ClickActionTask extends BukkitRunnable {
                 break;
 
             case BROADCAST:
-                Bukkit.broadcastMessage(StringUtils.color(executable));
+                Bukkit.getServer().sendMessage(StringUtils.parse(executable));
                 break;
 
             case CLOSE:
@@ -277,7 +275,7 @@ public class ClickActionTask extends BukkitRunnable {
 
             case JSON_BROADCAST:
             case BROADCAST_JSON:
-                plugin.audiences().all().sendMessage(AdventureUtils.fromJson(executable));
+                Bukkit.getServer().sendMessage(AdventureUtils.fromJson(executable));
                 break;
 
             case REFRESH:

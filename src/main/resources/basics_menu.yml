@@ -191,6 +191,32 @@ items:
 #     configuration options:
 #       expression
 #
+#   condition - Evaluates a native boolean expression that must return true or false
+#     configuration options:
+#       expression
+#
+#     This is a lightweight alternative to the javascript requirement. The expression is parsed once
+#     when the menu is loaded, so it is much faster to evaluate than javascript, at the cost of a
+#     smaller feature set.
+#
+#     Operators, lowest to highest precedence:
+#       ||          logical or
+#       &&          logical and
+#       ==  !=      equality
+#       <  <=  >  >=  comparison
+#       !           logical not
+#       ( )         grouping
+#
+#     Values are numbers, quoted strings, true/false, placeholders and arguments.
+#     Placeholders are resolved on their own, so a placeholder that expands to a value containing
+#     spaces or quotes will not break the expression.
+#     Comparisons are numeric when both sides are numbers, and alphabetical otherwise.
+#     A quoted value is always treated as a string, so "10" == 10 is true but "10" > 9 is not.
+#
+#     Examples:
+#       expression: '%player_level% >= 10 && %vault_eco_balance% > 500'
+#       expression: '!(%player_world% == world_nether) || %player_gamemode% == CREATIVE'
+#
 #   has item - Checks if a player has a specific item
 #     configuration options:
 #       material

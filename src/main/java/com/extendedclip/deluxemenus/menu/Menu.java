@@ -15,6 +15,7 @@ import java.util.*;
 import java.util.Map.Entry;
 import java.util.logging.Level;
 
+import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryType;
@@ -184,6 +185,10 @@ public class Menu {
     }
 
     public static void closeMenu(final @NotNull DeluxeMenus plugin, final @NotNull Player player, final boolean close, final boolean executeCloseActions) {
+        // Done before the holder check so the viewer always gets their inventory view back, even if the holder is
+        // already gone for some reason.
+        plugin.getPlayerInventoryHider().unhide(player);
+
         Optional<MenuHolder> optionalHolder = getMenuHolder(player);
         if (optionalHolder.isEmpty()) {
             return;
@@ -209,6 +214,8 @@ public class Menu {
     }
 
     public static void closeMenuForShutdown(final @NotNull DeluxeMenus plugin, final @NotNull Player player) {
+        plugin.getPlayerInventoryHider().unhide(player);
+
         getMenuHolder(player).ifPresent(MenuHolder::stopPlaceholderUpdate);
 
         player.closeInventory();
@@ -338,7 +345,7 @@ public class Menu {
 
             this.options.openHandler().ifPresent(h -> h.onClick(holder));
 
-            String title = StringUtils.color(holder.setPlaceholdersAndArguments(this.options.title()));
+            Component title = StringUtils.parse(holder.setPlaceholdersAndArguments(this.options.title()));
 
             Inventory inventory;
 
@@ -390,6 +397,12 @@ public class Menu {
 
                 if (isInMenu(holder.getViewer())) {
                     closeMenu(plugin, holder.getViewer(), false);
+                }
+
+                // Registered before the inventory is opened so that the very first packet the client receives for this
+                // window already has the player inventory blanked out of it.
+                if (this.options.hidePlayerInventory()) {
+                    plugin.getPlayerInventoryHider().hide(viewer, this.options.size());
                 }
 
                 viewer.openInventory(inventory);

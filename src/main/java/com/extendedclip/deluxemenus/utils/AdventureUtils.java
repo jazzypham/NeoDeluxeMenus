@@ -14,7 +14,7 @@ public final class AdventureUtils {
     }
 
     public static void sendJson(@NotNull final DeluxeMenus plugin, CommandSender sender, String json) {
-        plugin.audiences().sender(sender).sendMessage(fromJson(json));
+        sender.sendMessage(fromJson(json));
     }
 
     public static Component fromJson(String json) {

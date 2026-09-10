@@ -13,6 +13,7 @@ import com.extendedclip.deluxemenus.menu.options.CustomModelDataComponent;
 import com.extendedclip.deluxemenus.menu.options.LoreAppendMode;
 import com.extendedclip.deluxemenus.menu.options.MenuItemOptions;
 import com.extendedclip.deluxemenus.menu.options.MenuOptions;
+import com.extendedclip.deluxemenus.requirement.ConditionRequirement;
 import com.extendedclip.deluxemenus.requirement.HasEphemeralCooldownRequirement;
 import com.extendedclip.deluxemenus.requirement.HasExpRequirement;
 import com.extendedclip.deluxemenus.requirement.HasItemRequirement;
@@ -29,6 +30,7 @@ import com.extendedclip.deluxemenus.requirement.Requirement;
 import com.extendedclip.deluxemenus.requirement.RequirementList;
 import com.extendedclip.deluxemenus.requirement.RequirementType;
 import com.extendedclip.deluxemenus.requirement.StringLengthRequirement;
+import com.extendedclip.deluxemenus.requirement.condition.ConditionParseException;
 import com.extendedclip.deluxemenus.requirement.wrappers.ItemWrapper;
 import com.extendedclip.deluxemenus.utils.DebugLevel;
 import com.extendedclip.deluxemenus.utils.ItemUtils;
@@ -558,6 +560,12 @@ public class DeluxeMenusConfig {
         final boolean refresh = c.getBoolean(pre + "refresh", false);
         builder.refresh(refresh);
 
+        final boolean hidePlayerInventory = c.getBoolean(pre + "hide_player_inventory", false);
+        if (hidePlayerInventory && !plugin.getPlayerInventoryHider().isAvailable()) {
+            plugin.debug(DebugLevel.HIGHEST, Level.WARNING, "hide_player_inventory is enabled for menu: " + key + " but PacketEvents is not installed!", "The option will be ignored for this menu.");
+        }
+        builder.hidePlayerInventory(hidePlayerInventory);
+
         Map<Integer, TreeMap<Integer, MenuItem>> items = loadMenuItems(c, key, mainConfig);
 
         if (items == null || items.isEmpty()) {
@@ -1028,6 +1036,17 @@ public class DeluxeMenusConfig {
                         req = new JavascriptRequirement(plugin, c.getString(rPath + ".expression"));
                     } else {
                         plugin.debug(DebugLevel.HIGHEST, Level.WARNING, "Javascript requirement at path: " + rPath + " does not contain an expression: entry");
+                    }
+                    break;
+                case CONDITION:
+                    if (c.contains(rPath + ".expression")) {
+                        try {
+                            req = new ConditionRequirement(plugin, c.getString(rPath + ".expression"));
+                        } catch (final ConditionParseException exception) {
+                            plugin.debug(DebugLevel.HIGHEST, Level.WARNING, "Condition requirement at path: " + rPath + " has an invalid expression: " + exception.getDetailedMessage());
+                        }
+                    } else {
+                        plugin.debug(DebugLevel.HIGHEST, Level.WARNING, "Condition requirement at path: " + rPath + " does not contain an expression: entry");
                     }
                     break;
                 case EQUAL_TO:
