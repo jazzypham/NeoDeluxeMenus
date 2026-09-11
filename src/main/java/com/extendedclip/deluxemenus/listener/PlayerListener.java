@@ -2,6 +2,7 @@ package com.extendedclip.deluxemenus.listener;
 
 import com.extendedclip.deluxemenus.DeluxeMenus;
 import com.extendedclip.deluxemenus.action.ClickHandler;
+import com.extendedclip.deluxemenus.inventory.BottomInventorySlots;
 import com.extendedclip.deluxemenus.menu.Menu;
 import com.extendedclip.deluxemenus.menu.MenuHolder;
 import com.extendedclip.deluxemenus.menu.MenuItem;
@@ -134,9 +135,23 @@ public class PlayerListener extends Listener {
 
         event.setCancelled(true);
 
-        int slot = event.getRawSlot();
+        final int rawSlot = event.getRawSlot();
+        final int menuSize = holder.getInventory().getSize();
 
-        MenuItem item = holder.getItem(slot);
+        final MenuItem item;
+
+        if (rawSlot >= menuSize) {
+            final int bottomSlot = BottomInventorySlots.fromRawSlot(rawSlot, menuSize);
+            item = bottomSlot < 0 ? null : holder.getBottomItem(bottomSlot);
+
+            // Bottom items only exist on the client, which predicts pickups locally. Cancelling the click is not
+            // enough to put the button back on screen, so force a resync.
+            if (!holder.getBottomActiveItems().isEmpty()) {
+                Bukkit.getScheduler().runTask(plugin, holder::resyncBottomView);
+            }
+        } else {
+            item = holder.getItem(rawSlot);
+        }
 
         if (item == null) {
             return;

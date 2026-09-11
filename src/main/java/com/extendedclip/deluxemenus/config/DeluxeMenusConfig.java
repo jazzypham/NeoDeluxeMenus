@@ -6,11 +6,13 @@ import com.extendedclip.deluxemenus.action.ClickAction;
 import com.extendedclip.deluxemenus.action.ClickActionTask;
 import com.extendedclip.deluxemenus.action.ClickHandler;
 import com.extendedclip.deluxemenus.hooks.ItemHook;
+import com.extendedclip.deluxemenus.inventory.BottomInventorySlots;
 import com.extendedclip.deluxemenus.menu.Menu;
 import com.extendedclip.deluxemenus.menu.MenuHolder;
 import com.extendedclip.deluxemenus.menu.MenuItem;
 import com.extendedclip.deluxemenus.menu.options.CustomModelDataComponent;
 import com.extendedclip.deluxemenus.menu.options.LoreAppendMode;
+import com.extendedclip.deluxemenus.menu.options.MenuItemLocation;
 import com.extendedclip.deluxemenus.menu.options.MenuItemOptions;
 import com.extendedclip.deluxemenus.menu.options.MenuOptions;
 import com.extendedclip.deluxemenus.requirement.ConditionRequirement;
@@ -582,9 +584,13 @@ public class DeluxeMenusConfig {
         }
         builder.hidePlayerInventory(hidePlayerInventory);
 
-        Map<Integer, TreeMap<Integer, MenuItem>> items = loadMenuItems(c, key, mainConfig);
+        // Items can only be drawn over the player inventory while it is hidden, otherwise they would sit invisibly on
+        // top of the player's real items.
+        final boolean bottomItemsAllowed = hidePlayerInventory && plugin.getPlayerInventoryHider().isAvailable();
 
-        if (items == null || items.isEmpty()) {
+        LoadedMenuItems loadedItems = loadMenuItems(c, key, mainConfig, bottomItemsAllowed);
+
+        if (loadedItems == null || loadedItems.isEmpty()) {
             plugin.debug(DebugLevel.HIGHEST, Level.SEVERE, "Failed to load menu items for menu: " + key, "Skipping menu: " + key);
             return;
         }
@@ -594,10 +600,26 @@ public class DeluxeMenusConfig {
         builder.enableBypassPerm(c.getBoolean(pre + "enable_open_requirements_bypass_permissions", false));
 
         // Don't need to register the menu since it's done in the constructor
-        new Menu(plugin, builder.build(), items, path);
+        new Menu(plugin, builder.build(), loadedItems.items(), loadedItems.bottomItems(), path);
     }
 
-    private Map<Integer, TreeMap<Integer, MenuItem>> loadMenuItems(FileConfiguration c, String name, boolean mainConfig) {
+    /**
+     * The items of a menu, split by where they are drawn. Both maps are keyed by slot, then by priority.
+     *
+     * @param items       items of the menu itself, keyed by menu slot
+     * @param bottomItems items drawn over the hidden player inventory, keyed by player inventory slot
+     */
+    private record LoadedMenuItems(
+            @NotNull Map<Integer, TreeMap<Integer, MenuItem>> items,
+            @NotNull Map<Integer, TreeMap<Integer, MenuItem>> bottomItems
+    ) {
+
+        private boolean isEmpty() {
+            return items.isEmpty() && bottomItems.isEmpty();
+        }
+    }
+
+    private LoadedMenuItems loadMenuItems(FileConfiguration c, String name, boolean mainConfig, boolean bottomItemsAllowed) {
         String itemsPath = "gui_menus." + name + ".items";
 
         if (!mainConfig) {
@@ -615,6 +637,7 @@ public class DeluxeMenusConfig {
         }
 
         Map<Integer, TreeMap<Integer, MenuItem>> menuItems = new HashMap<>();
+        Map<Integer, TreeMap<Integer, MenuItem>> bottomMenuItems = new HashMap<>();
 
         for (String key : itemKeys) {
 
@@ -634,7 +657,21 @@ public class DeluxeMenusConfig {
 
             checkForDeprecatedItemOptions(c.getConfigurationSection(currentPath), name);
 
+            final String locationName = c.getString(currentPath + "location", MenuItemLocation.TOP.name());
+            MenuItemLocation location = Enums.getIfPresent(MenuItemLocation.class, locationName.toUpperCase(Locale.ROOT)).orNull();
+
+            if (location == null) {
+                plugin.debug(DebugLevel.HIGHEST, Level.WARNING, "Location: " + locationName + " for item: " + key + " in menu: " + name + " is not a valid location!", "Using the default location: top");
+                location = MenuItemLocation.TOP;
+            }
+
+            if (location == MenuItemLocation.BOTTOM && !bottomItemsAllowed) {
+                plugin.debug(DebugLevel.HIGHEST, Level.WARNING, "Item: " + key + " in menu: " + name + " uses location: bottom, which requires hide_player_inventory to be enabled for the menu and PacketEvents to be installed!", "Skipping item: " + key);
+                continue;
+            }
+
             MenuItemOptions.MenuItemOptionsBuilder builder = MenuItemOptions.builder()
+                    .location(location)
                     .material(material)
                     .baseColor(Optional.ofNullable(c.getString(currentPath + "base_color"))
                             .map(String::toUpperCase)
@@ -854,19 +891,26 @@ public class DeluxeMenusConfig {
             }
 
             final MenuItem menuItem = new MenuItem(plugin, builder.build());
+            final boolean bottom = location == MenuItemLocation.BOTTOM;
+            final Map<Integer, TreeMap<Integer, MenuItem>> target = bottom ? bottomMenuItems : menuItems;
 
             for (int slot : slots) {
+                if (bottom && !BottomInventorySlots.isValid(slot)) {
+                    plugin.debug(DebugLevel.HIGHEST, Level.WARNING, "Slot " + slot + " for item: " + key + " in menu: " + name + " is not a player inventory slot!", "Player inventory slots are 0 to " + (BottomInventorySlots.SIZE - 1) + ", where 0 to 8 is the hotbar.", "Skipping slot " + slot + " for item: " + key);
+                    continue;
+                }
+
                 TreeMap<Integer, MenuItem> slotPriorityMap;
-                if ((!menuItems.containsKey(slot)) || menuItems.get(slot) == null) {
+                if ((!target.containsKey(slot)) || target.get(slot) == null) {
                     slotPriorityMap = new TreeMap<>();
-                    menuItems.put(slot, slotPriorityMap);
+                    target.put(slot, slotPriorityMap);
                 } else {
-                    slotPriorityMap = menuItems.get(slot);
+                    slotPriorityMap = target.get(slot);
                 }
                 slotPriorityMap.put(menuItem.options().priority(), new MenuItem(plugin, menuItem.options().asBuilder().slot(slot).build()));
             }
         }
-        return menuItems;
+        return new LoadedMenuItems(menuItems, bottomMenuItems);
     }
 
     private RequirementList getRequirements(FileConfiguration c, String path) {

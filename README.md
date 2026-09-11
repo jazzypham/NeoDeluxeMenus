@@ -41,6 +41,28 @@ so the code can use modern Paper APIs directly.
   underneath a menu. Purely visual — it only blanks the outgoing container packets, the
   server side inventory is never touched, so items cannot be lost. Requires
   [PacketEvents](https://github.com/retrooper/packetevents); ignored without it.
+- **`location: bottom`.** Per-item option that places a button in the player inventory
+  area underneath the menu instead of in the menu itself. Defaults to `top`. Slots are
+  numbered like a player inventory: `0-8` is the hotbar, `9-35` is the main storage.
+  Everything else about the item (`slots`, `priority`, `view_requirement`, all click
+  handlers, `update`) works exactly as it does for normal items.
+
+  Buttons drawn there are never given to the player — they are only substituted into the
+  same packets `hide_player_inventory` already blanks — so they cannot be taken, dropped
+  or duped, and the real inventory comes back untouched when the menu closes. Because of
+  that, the option **requires `hide_player_inventory: true` on the same menu** (plus
+  PacketEvents); bottom items on any other menu are skipped with a warning.
+
+  ```yaml
+  items:
+    close_button:
+      material: BARRIER
+      location: bottom
+      slot: 4            # fifth hotbar slot
+      display_name: "&cClose"
+      left_click_commands:
+        - "[close]"
+  ```
 
 ## Requirements
 

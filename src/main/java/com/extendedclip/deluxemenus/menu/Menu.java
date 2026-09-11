@@ -4,6 +4,7 @@ import com.extendedclip.deluxemenus.DeluxeMenus;
 import com.extendedclip.deluxemenus.action.ClickHandler;
 import com.extendedclip.deluxemenus.dupe.MenuItemMarker;
 import com.extendedclip.deluxemenus.events.DeluxeMenusOpenMenuEvent;
+import com.extendedclip.deluxemenus.inventory.BottomInventorySlots;
 import com.extendedclip.deluxemenus.events.DeluxeMenusPreOpenMenuEvent;
 import com.extendedclip.deluxemenus.menu.command.RegistrableMenuCommand;
 import com.extendedclip.deluxemenus.menu.options.MenuOptions;
@@ -33,6 +34,8 @@ public class Menu {
     private final DeluxeMenus plugin;
     private final MenuOptions options;
     private final Map<Integer, TreeMap<Integer, MenuItem>> items;
+    // items drawn over the hidden player inventory, keyed by player inventory slot instead of menu slot
+    private final Map<Integer, TreeMap<Integer, MenuItem>> bottomItems;
     // menu path starting from the plugin directory
     private final String path;
 
@@ -44,9 +47,20 @@ public class Menu {
             final @NotNull Map<Integer, TreeMap<Integer, MenuItem>> items,
             final @NotNull String path
     ) {
+        this(plugin, options, items, Map.of(), path);
+    }
+
+    public Menu(
+            final @NotNull DeluxeMenus plugin,
+            final @NotNull MenuOptions options,
+            final @NotNull Map<Integer, TreeMap<Integer, MenuItem>> items,
+            final @NotNull Map<Integer, TreeMap<Integer, MenuItem>> bottomItems,
+            final @NotNull String path
+    ) {
         this.plugin = plugin;
         this.options = options;
         this.items = items;
+        this.bottomItems = bottomItems;
         this.path = path;
 
         if (this.options.registerCommands()) {
@@ -275,8 +289,65 @@ public class Menu {
         openMenu(viewer, null, null);
     }
 
+    /**
+     * Picks the highest priority bottom item whose view requirements pass for each player inventory slot.
+     * <p>
+     * Shared by the open and refresh paths, mirroring what those do for the items of the menu itself.
+     */
+    static @NotNull Set<MenuItem> selectBottomItems(
+            final @NotNull Map<Integer, TreeMap<Integer, MenuItem>> bottomItems,
+            final @NotNull MenuHolder holder
+    ) {
+        final Set<MenuItem> active = new HashSet<>();
+
+        for (final Entry<Integer, TreeMap<Integer, MenuItem>> entry : bottomItems.entrySet()) {
+            if (!BottomInventorySlots.isValid(entry.getKey())) {
+                continue;
+            }
+
+            for (final MenuItem item : entry.getValue().values()) {
+                if (item.options().viewRequirements().isEmpty()) {
+                    active.add(item);
+                    break;
+                }
+
+                if (item.options().viewRequirements().get().evaluate(holder)) {
+                    active.add(item);
+                    break;
+                }
+            }
+        }
+
+        return active;
+    }
+
+    /**
+     * Builds the items drawn over the hidden player inventory, keyed by player inventory slot.
+     * <p>
+     * These are never given to the player, but they are still marked so that {@link #cleanInventory} would catch one
+     * if it ever leaked into a real inventory.
+     */
+    static @NotNull Map<Integer, ItemStack> renderBottomItems(
+            final @NotNull DeluxeMenus plugin,
+            final @NotNull MenuHolder holder,
+            final @NotNull Set<MenuItem> bottomItems
+    ) {
+        final Map<Integer, ItemStack> contents = new HashMap<>(bottomItems.size());
+
+        for (final MenuItem item : bottomItems) {
+            final ItemStack itemStack = item.getItemStack(holder);
+            if (itemStack == null) {
+                continue;
+            }
+
+            contents.put(item.options().slot(), plugin.getMenuItemMarker().mark(itemStack));
+        }
+
+        return contents;
+    }
+
     public void openMenu(final @NotNull Player viewer, final @Nullable Map<String, String> args, final @Nullable Player placeholderPlayer) {
-        if (items == null || items.isEmpty()) {
+        if ((items == null || items.isEmpty()) && bottomItems.isEmpty()) {
             return;
         }
 
@@ -336,12 +407,15 @@ public class Menu {
                 }
             }
 
-            if (activeItems.isEmpty()) {
+            final Set<MenuItem> activeBottomItems = hasBottomItems() ? selectBottomItems(this.bottomItems, holder) : Set.<MenuItem>of();
+
+            if (activeItems.isEmpty() && activeBottomItems.isEmpty()) {
                 return;
             }
 
             holder.setMenuName(this.options.name());
             holder.setActiveItems(activeItems);
+            holder.setBottomActiveItems(activeBottomItems);
 
             this.options.openHandler().ifPresent(h -> h.onClick(holder));
 
@@ -388,6 +462,15 @@ public class Menu {
                 inventory.setItem(item.options().slot(), iStack);
             }
 
+            holder.setBottomContents(renderBottomItems(plugin, holder, activeBottomItems));
+
+            for (MenuItem item : activeBottomItems) {
+                if (item.options().updatePlaceholders()) {
+                    update = true;
+                    break;
+                }
+            }
+
             final boolean updatePlaceholders = update;
 
             Bukkit.getScheduler().runTask(plugin, () -> {
@@ -400,9 +483,9 @@ public class Menu {
                 }
 
                 // Registered before the inventory is opened so that the very first packet the client receives for this
-                // window already has the player inventory blanked out of it.
+                // window already has the player inventory blanked out of it and the bottom items drawn over it.
                 if (this.options.hidePlayerInventory()) {
-                    plugin.getPlayerInventoryHider().hide(viewer, this.options.size());
+                    plugin.getPlayerInventoryHider().hide(viewer, inventory.getSize(), holder.getBottomContents());
                 }
 
                 viewer.openInventory(inventory);
@@ -426,6 +509,21 @@ public class Menu {
 
     public @NotNull Map<Integer, TreeMap<Integer, MenuItem>> getMenuItems() {
         return this.items;
+    }
+
+    /**
+     * The items drawn over the hidden player inventory, keyed by player inventory slot.
+     */
+    public @NotNull Map<Integer, TreeMap<Integer, MenuItem>> getBottomMenuItems() {
+        return this.bottomItems;
+    }
+
+    /**
+     * Whether this menu draws items over the player inventory. Never true without {@code hide_player_inventory}, since
+     * those items would otherwise be invisible buttons sitting on top of the player's real items.
+     */
+    public boolean hasBottomItems() {
+        return this.options.hidePlayerInventory() && !this.bottomItems.isEmpty();
     }
 
     public @NotNull Optional<String> getMenuCommandUsed(final @NotNull String command) {

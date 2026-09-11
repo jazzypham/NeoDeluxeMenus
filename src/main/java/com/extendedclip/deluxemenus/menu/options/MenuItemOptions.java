@@ -65,6 +65,7 @@ public class MenuItemOptions {
     private final List<String> nbtInts;
 
     private final int slot;
+    private final MenuItemLocation location;
     private final int priority;
     private final boolean updatePlaceholders;
 
@@ -121,6 +122,7 @@ public class MenuItemOptions {
         this.nbtShorts = builder.nbtShorts;
         this.nbtInts = builder.nbtInts;
         this.slot = builder.slot;
+        this.location = builder.location;
         this.priority = builder.priority;
         this.updatePlaceholders = builder.updatePlaceholders;
         this.clickHandler = builder.clickHandler;
@@ -294,6 +296,13 @@ public class MenuItemOptions {
         return slot;
     }
 
+    /**
+     * Whether {@link #slot()} refers to a slot of the menu itself or of the player inventory shown underneath it.
+     */
+    public @NotNull MenuItemLocation location() {
+        return location;
+    }
+
     public int priority() {
         return priority;
     }
@@ -391,6 +400,7 @@ public class MenuItemOptions {
                 .nbtShorts(this.nbtShorts)
                 .nbtInts(this.nbtInts)
                 .slot(this.slot)
+                .location(this.location)
                 .priority(this.priority)
                 .updatePlaceholders(this.updatePlaceholders)
                 .clickHandler(this.clickHandler)
@@ -454,6 +464,7 @@ public class MenuItemOptions {
         private List<String> nbtInts = Collections.emptyList();
 
         private int slot;
+        private MenuItemLocation location = MenuItemLocation.TOP;
         private int priority;
         private boolean updatePlaceholders;
 
@@ -674,6 +685,11 @@ public class MenuItemOptions {
 
         public MenuItemOptionsBuilder slot(final int slot) {
             this.slot = slot;
+            return this;
+        }
+
+        public MenuItemOptionsBuilder location(final @Nullable MenuItemLocation location) {
+            this.location = location == null ? MenuItemLocation.TOP : location;
             return this;
         }
 

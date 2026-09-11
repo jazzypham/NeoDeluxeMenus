@@ -6,10 +6,14 @@ import com.extendedclip.deluxemenus.inventory.hider.impl.PacketEventsInventoryHi
 import com.extendedclip.deluxemenus.inventory.hider.impl.UnavailableInventoryHider;
 import com.github.retrooper.packetevents.PacketEvents;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Map;
+
 /**
- * Hides the player inventory shown underneath menus that use the {@code hide_player_inventory} option.
+ * Hides the player inventory shown underneath menus that use the {@code hide_player_inventory} option, and draws the
+ * menu's {@code location: bottom} items over it.
  * <p>
  * This is purely cosmetic. Menu clicks are already cancelled, and nothing here touches the server side player
  * inventory, so a player's items are never at risk. Requires PacketEvents, and silently does nothing without it.
@@ -40,8 +44,13 @@ public class PlayerInventoryHider implements InventoryHider {
     }
 
     @Override
-    public void hide(@NotNull final Player viewer, final int menuSize) {
-        hider.hide(viewer, menuSize);
+    public void hide(@NotNull final Player viewer, final int menuSize, final @NotNull Map<Integer, ItemStack> bottomContents) {
+        hider.hide(viewer, menuSize, bottomContents);
+    }
+
+    @Override
+    public void updateOverlay(@NotNull final Player viewer, final @NotNull Map<Integer, ItemStack> bottomContents) {
+        hider.updateOverlay(viewer, bottomContents);
     }
 
     @Override

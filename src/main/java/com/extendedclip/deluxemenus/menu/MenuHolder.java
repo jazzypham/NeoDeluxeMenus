@@ -29,6 +29,8 @@ public class MenuHolder implements InventoryHolder {
     private Player placeholderPlayer;
     private String menuName;
     private Set<MenuItem> activeItems;
+    private Set<MenuItem> bottomActiveItems = Set.of();
+    private Map<Integer, ItemStack> bottomContents = Map.of();
     private BukkitTask updateTask = null;
     private BukkitTask refreshTask = null;
     private Inventory inventory;
@@ -83,6 +85,25 @@ public class MenuHolder implements InventoryHolder {
         return this;
     }
 
+    public Set<MenuItem> getBottomActiveItems() {
+        return bottomActiveItems;
+    }
+
+    public void setBottomActiveItems(@NotNull Set<MenuItem> items) {
+        this.bottomActiveItems = items;
+    }
+
+    /**
+     * The items drawn over the hidden player inventory, keyed by player inventory slot. Never given to the player.
+     */
+    public @NotNull Map<Integer, ItemStack> getBottomContents() {
+        return bottomContents;
+    }
+
+    public void setBottomContents(@NotNull Map<Integer, ItemStack> bottomContents) {
+        this.bottomContents = bottomContents;
+    }
+
     public MenuItem getItem(int slot) {
         for (MenuItem item : activeItems) {
             if (item.options().slot() == slot) {
@@ -90,6 +111,33 @@ public class MenuHolder implements InventoryHolder {
             }
         }
         return null;
+    }
+
+    /**
+     * @param bottomSlot a player inventory slot, as numbered by
+     *                   {@link com.extendedclip.deluxemenus.inventory.BottomInventorySlots}
+     */
+    public MenuItem getBottomItem(int bottomSlot) {
+        for (MenuItem item : bottomActiveItems) {
+            if (item.options().slot() == bottomSlot) {
+                return item;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Pushes the current bottom items to the inventory hider and makes the client redraw them. Must be called from the
+     * main thread. Does nothing for menus without bottom items.
+     */
+    public void resyncBottomView() {
+        if (bottomActiveItems.isEmpty()) {
+            return;
+        }
+
+        plugin.getPlayerInventoryHider().updateOverlay(viewer, bottomContents);
+        // The hider rewrites the resync packets this triggers, so the overlay is redrawn without sending anything.
+        viewer.updateInventory();
     }
 
     public Optional<Menu> getMenu() {
@@ -132,7 +180,7 @@ public class MenuHolder implements InventoryHolder {
 
         Menu menu = optionalMenu.get();
 
-        if (menu.getMenuItems().isEmpty()) {
+        if (menu.getMenuItems().isEmpty() && menu.getBottomMenuItems().isEmpty()) {
             return;
         }
 
@@ -172,7 +220,11 @@ public class MenuHolder implements InventoryHolder {
                 }
             }
 
-            if (active.isEmpty()) {
+            final Set<MenuItem> activeBottom = menu.hasBottomItems()
+                    ? Menu.selectBottomItems(menu.getBottomMenuItems(), this)
+                    : Set.<MenuItem>of();
+
+            if (active.isEmpty() && activeBottom.isEmpty()) {
                 Menu.closeMenu(plugin, getViewer(), true);
             }
 
@@ -203,7 +255,17 @@ public class MenuHolder implements InventoryHolder {
                     getInventory().setItem(item.options().slot(), iStack);
                 }
 
+                for (MenuItem item : activeBottom) {
+                    if (item.options().updatePlaceholders()) {
+                        update = true;
+                        break;
+                    }
+                }
+
                 setActiveItems(active);
+                setBottomActiveItems(activeBottom);
+                setBottomContents(Menu.renderBottomItems(plugin, this, activeBottom));
+                resyncBottomView();
 
                 if (update && updateTask == null) {
                     startUpdatePlaceholdersTask();
@@ -270,50 +332,25 @@ public class MenuHolder implements InventoryHolder {
 
                 Set<MenuItem> items = getActiveItems();
 
-                if (items == null) {
-                    return;
+                if (items != null) {
+                    for (MenuItem item : items) {
+                        if (item.options().updatePlaceholders()) {
+                            updateItemPlaceholders(item, inventory.getItem(item.options().slot()));
+                        }
+                    }
                 }
 
-                for (MenuItem item : items) {
+                boolean updatedBottom = false;
 
+                for (MenuItem item : getBottomActiveItems()) {
                     if (item.options().updatePlaceholders()) {
-
-                        ItemStack i = inventory.getItem(item.options().slot());
-
-                        if (i == null) {
-                            continue;
-                        }
-
-                        int amt = i.getAmount();
-
-                        if (item.options().dynamicAmount().isPresent()) {
-                            try {
-                                amt = Integer.parseInt(setPlaceholdersAndArguments(item.options().dynamicAmount().get()));
-                                if (amt <= 0) {
-                                    amt = 1;
-                                }
-                            } catch (Exception exception) {
-                                plugin.printStacktrace(
-                                        "Something went wrong while updating item in slot " + item.options().slot() +
-                                                ". Invalid dynamic amount: " + setPlaceholdersAndArguments(item.options().dynamicAmount().get()),
-                                        exception
-                                );
-                            }
-                        }
-
-                        ItemMeta meta = i.getItemMeta();
-
-                        if (item.options().displayNameHasPlaceholders() && item.options().displayName().isPresent()) {
-                            meta.displayName(StringUtils.parseItem(setPlaceholdersAndArguments(item.options().displayName().get())));
-                        }
-
-                        if (item.options().loreHasPlaceholders()) {
-                            meta.lore(item.getMenuItemLore(getHolder(), item.options().lore()));
-                        }
-
-                        i.setItemMeta(meta);
-                        i.setAmount(amt);
+                        updatedBottom |= updateItemPlaceholders(item, bottomContents.get(item.options().slot()));
                     }
+                }
+
+                // Bottom items live outside any Bukkit inventory, so nothing syncs them to the client on its own.
+                if (updatedBottom) {
+                    Bukkit.getScheduler().runTask(plugin, MenuHolder.this::resyncBottomView);
                 }
             }
 
@@ -322,6 +359,48 @@ public class MenuHolder implements InventoryHolder {
                         .map(Menu::options)
                         .map(MenuOptions::updateInterval)
                         .orElse(10));
+    }
+
+    /**
+     * Re-parses the placeholders of an item that is already on screen, in place.
+     *
+     * @return true if the item was updated
+     */
+    private boolean updateItemPlaceholders(final @NotNull MenuItem item, final ItemStack itemStack) {
+        if (itemStack == null) {
+            return false;
+        }
+
+        int amt = itemStack.getAmount();
+
+        if (item.options().dynamicAmount().isPresent()) {
+            try {
+                amt = Integer.parseInt(setPlaceholdersAndArguments(item.options().dynamicAmount().get()));
+                if (amt <= 0) {
+                    amt = 1;
+                }
+            } catch (Exception exception) {
+                plugin.printStacktrace(
+                        "Something went wrong while updating item in slot " + item.options().slot() +
+                                ". Invalid dynamic amount: " + setPlaceholdersAndArguments(item.options().dynamicAmount().get()),
+                        exception
+                );
+            }
+        }
+
+        ItemMeta meta = itemStack.getItemMeta();
+
+        if (item.options().displayNameHasPlaceholders() && item.options().displayName().isPresent()) {
+            meta.displayName(StringUtils.parseItem(setPlaceholdersAndArguments(item.options().displayName().get())));
+        }
+
+        if (item.options().loreHasPlaceholders()) {
+            meta.lore(item.getMenuItemLore(getHolder(), item.options().lore()));
+        }
+
+        itemStack.setItemMeta(meta);
+        itemStack.setAmount(amt);
+        return true;
     }
 
     public boolean isUpdating() {
