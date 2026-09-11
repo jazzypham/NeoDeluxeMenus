@@ -3,6 +3,7 @@ package com.extendedclip.deluxemenus.listener;
 import com.extendedclip.deluxemenus.DeluxeMenus;
 import com.extendedclip.deluxemenus.action.ClickHandler;
 import com.extendedclip.deluxemenus.inventory.BottomInventorySlots;
+import com.extendedclip.deluxemenus.inventory.PlayerInventoryHider;
 import com.extendedclip.deluxemenus.menu.Menu;
 import com.extendedclip.deluxemenus.menu.MenuHolder;
 import com.extendedclip.deluxemenus.menu.MenuItem;
@@ -95,8 +96,22 @@ public class PlayerListener extends Listener {
 
         final Player player = (Player) event.getPlayer();
 
-        // Safety net: whatever the menu state is, a closed inventory must never stay hidden.
-        plugin.getPlayerInventoryHider().unhide(player);
+        final PlayerInventoryHider hider = plugin.getPlayerInventoryHider();
+
+        // Scoped to the window this viewer is actually being hidden for. A menu opened on top of another closes the old
+        // one from inside openInventory, after the new one has already been registered with the hider, so unhiding
+        // unconditionally here would blank out the menu that is about to be drawn.
+        hider.unhide(player, event.getInventory());
+
+        // Safety net: a viewer must never be left hidden with no menu on screen. The re-open path registers its holder
+        // in the same tick as the close, so this does not fire for menu to menu navigation.
+        if (hider.isHidden(player)) {
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                if (!Menu.isInMenu(player)) {
+                    hider.unhide(player);
+                }
+            });
+        }
 
         if (Menu.isInMenu(player)) {
             Menu.closeMenu(plugin, player, false);

@@ -6,6 +6,7 @@ import com.extendedclip.deluxemenus.inventory.hider.impl.PacketEventsInventoryHi
 import com.extendedclip.deluxemenus.inventory.hider.impl.UnavailableInventoryHider;
 import com.github.retrooper.packetevents.PacketEvents;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,8 +45,13 @@ public class PlayerInventoryHider implements InventoryHider {
     }
 
     @Override
-    public void hide(@NotNull final Player viewer, final int menuSize, final @NotNull Map<Integer, ItemStack> bottomContents) {
-        hider.hide(viewer, menuSize, bottomContents);
+    public boolean isHidden(@NotNull final Player viewer) {
+        return hider.isHidden(viewer);
+    }
+
+    @Override
+    public void hide(@NotNull final Player viewer, final @NotNull Inventory menu, final @NotNull Map<Integer, ItemStack> bottomContents) {
+        hider.hide(viewer, menu, bottomContents);
     }
 
     @Override
@@ -56,6 +62,11 @@ public class PlayerInventoryHider implements InventoryHider {
     @Override
     public void unhide(@NotNull final Player viewer) {
         hider.unhide(viewer);
+    }
+
+    @Override
+    public void unhide(@NotNull final Player viewer, final @NotNull Inventory closed) {
+        hider.unhide(viewer, closed);
     }
 
     private static boolean checkPacketEvents() {

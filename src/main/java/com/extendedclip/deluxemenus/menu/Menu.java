@@ -485,7 +485,7 @@ public class Menu {
                 // Registered before the inventory is opened so that the very first packet the client receives for this
                 // window already has the player inventory blanked out of it and the bottom items drawn over it.
                 if (this.options.hidePlayerInventory()) {
-                    plugin.getPlayerInventoryHider().hide(viewer, inventory.getSize(), holder.getBottomContents());
+                    plugin.getPlayerInventoryHider().hide(viewer, inventory, holder.getBottomContents());
                 }
 
                 viewer.openInventory(inventory);

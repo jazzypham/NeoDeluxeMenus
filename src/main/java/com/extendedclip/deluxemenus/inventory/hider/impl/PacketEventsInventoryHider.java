@@ -20,6 +20,7 @@ import io.github.retrooper.packetevents.util.SpigotConversionUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.Inventory;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -104,14 +105,29 @@ public class PacketEventsInventoryHider extends PacketListenerAbstract implement
     }
 
     @Override
-    public void hide(@NotNull final Player viewer, final int menuSize, final @NotNull Map<Integer, org.bukkit.inventory.ItemStack> bottomContents) {
-        hidden.put(viewer.getUniqueId(), new HiddenView(menuSize, convert(bottomContents)));
+    public boolean isHidden(@NotNull final Player viewer) {
+        return hidden.containsKey(viewer.getUniqueId());
+    }
+
+    @Override
+    public void hide(@NotNull final Player viewer, final @NotNull Inventory menu, final @NotNull Map<Integer, org.bukkit.inventory.ItemStack> bottomContents) {
+        hidden.put(viewer.getUniqueId(), new HiddenView(menu, menu.getSize(), convert(bottomContents)));
     }
 
     @Override
     public void updateOverlay(@NotNull final Player viewer, final @NotNull Map<Integer, org.bukkit.inventory.ItemStack> bottomContents) {
         final Map<Integer, ItemStack> overlay = convert(bottomContents);
-        hidden.computeIfPresent(viewer.getUniqueId(), (uuid, view) -> new HiddenView(view.menuSize(), overlay));
+        hidden.computeIfPresent(viewer.getUniqueId(), (uuid, view) -> new HiddenView(view.menu(), view.menuSize(), overlay));
+    }
+
+    @Override
+    public void unhide(@NotNull final Player viewer, final @NotNull Inventory closed) {
+        final HiddenView view = hidden.get(viewer.getUniqueId());
+        if (view == null || !closed.equals(view.menu())) {
+            return;
+        }
+
+        unhide(viewer);
     }
 
     @Override
@@ -273,10 +289,13 @@ public class PacketEventsInventoryHider extends PacketListenerAbstract implement
     /**
      * A viewer's hidden inventory and the items drawn over it.
      *
+     * @param menu     the menu this view belongs to. Only ever read from the main thread, to tell a close of this
+     *                 window apart from a close of one it replaced.
      * @param menuSize the size of the menu inventory. Every raw slot at or above it belongs to the player inventory.
+     *                 Cached here so the packet path never calls into the Bukkit API from a netty thread.
      * @param overlay  items to draw, keyed by player inventory slot. Empty for menus without bottom items.
      */
-    private record HiddenView(int menuSize, @NotNull Map<Integer, ItemStack> overlay) {
+    private record HiddenView(@NotNull Inventory menu, int menuSize, @NotNull Map<Integer, ItemStack> overlay) {
 
         /**
          * The item to draw at a raw slot known to be part of the player inventory, blank when nothing is drawn there.

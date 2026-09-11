@@ -2,6 +2,7 @@ package com.extendedclip.deluxemenus.inventory.hider.impl;
 
 import com.extendedclip.deluxemenus.inventory.hider.InventoryHider;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,7 +27,12 @@ public class UnavailableInventoryHider implements InventoryHider {
     }
 
     @Override
-    public void hide(@NotNull final Player viewer, final int menuSize, final @NotNull Map<Integer, ItemStack> bottomContents) {
+    public boolean isHidden(@NotNull final Player viewer) {
+        return false;
+    }
+
+    @Override
+    public void hide(@NotNull final Player viewer, final @NotNull Inventory menu, final @NotNull Map<Integer, ItemStack> bottomContents) {
     }
 
     @Override
@@ -35,5 +41,9 @@ public class UnavailableInventoryHider implements InventoryHider {
 
     @Override
     public void unhide(@NotNull final Player viewer) {
+    }
+
+    @Override
+    public void unhide(@NotNull final Player viewer, final @NotNull Inventory closed) {
     }
 }
