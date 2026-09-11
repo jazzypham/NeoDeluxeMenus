@@ -24,6 +24,7 @@ import com.extendedclip.deluxemenus.requirement.HasMoneyRequirement;
 import com.extendedclip.deluxemenus.requirement.HasPermissionRequirement;
 import com.extendedclip.deluxemenus.requirement.HasPermissionsRequirement;
 import com.extendedclip.deluxemenus.requirement.InputResultRequirement;
+import com.extendedclip.deluxemenus.requirement.InvalidRequirement;
 import com.extendedclip.deluxemenus.requirement.IsNearRequirement;
 import com.extendedclip.deluxemenus.requirement.IsObjectRequirement;
 import com.extendedclip.deluxemenus.requirement.JavascriptRequirement;
@@ -1099,14 +1100,19 @@ public class DeluxeMenusConfig {
                     }
                     break;
                 case CONDITION:
+                    // A condition that cannot be built becomes an InvalidRequirement rather than being dropped.
+                    // Dropping it would fail open: a requirement list that ends up empty is stored as null, which
+                    // every caller reads as "no requirements", so a typo would let everyone through.
                     if (c.contains(rPath + ".expression")) {
                         try {
                             req = new ConditionRequirement(plugin, c.getString(rPath + ".expression"));
                         } catch (final ConditionParseException exception) {
-                            plugin.debug(DebugLevel.HIGHEST, Level.WARNING, "Condition requirement at path: " + rPath + " has an invalid expression: " + exception.getDetailedMessage());
+                            plugin.debug(DebugLevel.HIGHEST, Level.SEVERE, "Condition requirement at path: " + rPath + " has an invalid expression: " + exception.getDetailedMessage(), "This requirement will always deny until the expression is fixed.");
+                            req = new InvalidRequirement(rPath, exception.getMessage());
                         }
                     } else {
-                        plugin.debug(DebugLevel.HIGHEST, Level.WARNING, "Condition requirement at path: " + rPath + " does not contain an expression: entry");
+                        plugin.debug(DebugLevel.HIGHEST, Level.SEVERE, "Condition requirement at path: " + rPath + " does not contain an expression: entry", "This requirement will always deny until an expression is added.");
+                        req = new InvalidRequirement(rPath, "missing expression");
                     }
                     break;
                 case EQUAL_TO:

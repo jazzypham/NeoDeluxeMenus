@@ -116,8 +116,12 @@ public class PacketEventsInventoryHider extends PacketListenerAbstract implement
 
     @Override
     public void updateOverlay(@NotNull final Player viewer, final @NotNull Map<Integer, org.bukkit.inventory.ItemStack> bottomContents) {
-        final Map<Integer, ItemStack> overlay = convert(bottomContents);
-        hidden.computeIfPresent(viewer.getUniqueId(), (uuid, view) -> new HiddenView(view.menu(), view.menuSize(), overlay));
+        // Converted inside the remapping function so that a viewer who is not being hidden for costs a map lookup
+        // instead of a full item conversion.
+        hidden.computeIfPresent(
+                viewer.getUniqueId(),
+                (uuid, view) -> new HiddenView(view.menu(), view.menuSize(), convert(bottomContents))
+        );
     }
 
     @Override

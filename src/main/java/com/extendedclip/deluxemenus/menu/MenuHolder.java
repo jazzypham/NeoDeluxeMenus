@@ -31,6 +31,7 @@ public class MenuHolder implements InventoryHolder {
     private Set<MenuItem> activeItems;
     private Set<MenuItem> bottomActiveItems = Set.of();
     private Map<Integer, ItemStack> bottomContents = Map.of();
+    private volatile boolean bottomResyncQueued = false;
     private BukkitTask updateTask = null;
     private BukkitTask refreshTask = null;
     private Inventory inventory;
@@ -127,8 +128,32 @@ public class MenuHolder implements InventoryHolder {
     }
 
     /**
+     * Schedules at most one {@link #resyncBottomView()} per tick. Safe to call from any thread.
+     * <p>
+     * A resync converts every bottom item into its packet form and sends a full inventory update, so it must not run
+     * once per click: a client can send several clicks per tick, and each one would otherwise schedule its own.
+     * <p>
+     * The flag is {@code volatile} rather than synchronised because the click path runs on the main thread while the
+     * placeholder update task runs asynchronously. The worst case of a lost race is one redundant resync, never a
+     * missed one.
+     */
+    public void requestBottomResync() {
+        if (bottomActiveItems.isEmpty() || bottomResyncQueued) {
+            return;
+        }
+
+        bottomResyncQueued = true;
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            bottomResyncQueued = false;
+            resyncBottomView();
+        });
+    }
+
+    /**
      * Pushes the current bottom items to the inventory hider and makes the client redraw them. Must be called from the
      * main thread. Does nothing for menus without bottom items.
+     * <p>
+     * Prefer {@link #requestBottomResync()} on paths a player can trigger repeatedly.
      */
     public void resyncBottomView() {
         if (bottomActiveItems.isEmpty()) {
@@ -350,7 +375,7 @@ public class MenuHolder implements InventoryHolder {
 
                 // Bottom items live outside any Bukkit inventory, so nothing syncs them to the client on its own.
                 if (updatedBottom) {
-                    Bukkit.getScheduler().runTask(plugin, MenuHolder.this::resyncBottomView);
+                    requestBottomResync();
                 }
             }
 

@@ -474,6 +474,13 @@ public class Menu {
             final boolean updatePlaceholders = update;
 
             Bukkit.getScheduler().runTask(plugin, () -> {
+                // The viewer can quit while the items above are being built. Their quit handling has already run by
+                // now, so registering with the hider or adding the holder here would leak both: the uuid would stay
+                // hidden forever, and the stale holder would cancel every inventory click after their next login.
+                if (!viewer.isOnline()) {
+                    return;
+                }
+
                 if(options.refresh()) {
                     holder.startRefreshTask();
                 }
@@ -497,6 +504,10 @@ public class Menu {
       });
 
       Bukkit.getScheduler().runTask(plugin, () -> {
+        if (!viewer.isOnline()) {
+          return;
+        }
+
         DeluxeMenusOpenMenuEvent openEvent = new DeluxeMenusOpenMenuEvent(viewer, holder);
         Bukkit.getPluginManager().callEvent(openEvent);
       });

@@ -160,10 +160,9 @@ public class PlayerListener extends Listener {
             item = bottomSlot < 0 ? null : holder.getBottomItem(bottomSlot);
 
             // Bottom items only exist on the client, which predicts pickups locally. Cancelling the click is not
-            // enough to put the button back on screen, so force a resync.
-            if (!holder.getBottomActiveItems().isEmpty()) {
-                Bukkit.getScheduler().runTask(plugin, holder::resyncBottomView);
-            }
+            // enough to put the button back on screen, so force a resync. Coalesced to one per tick: this fires for
+            // every click in the area, including ones that hit no button, and a client can click faster than that.
+            holder.requestBottomResync();
         } else {
             item = holder.getItem(rawSlot);
         }
