@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Locale;
 
 import static com.extendedclip.deluxemenus.utils.Constants.INVENTORY_ITEM_ACCESSORS;
+import static com.extendedclip.deluxemenus.utils.Constants.MENU_ITEM_PREFIX;
 import static com.extendedclip.deluxemenus.utils.Constants.PLACEHOLDER_PREFIX;
 import static com.extendedclip.deluxemenus.utils.Constants.STACK_PREFIX;
 import static com.extendedclip.deluxemenus.utils.Constants.WATER_BOTTLE;
@@ -38,6 +39,17 @@ public final class ItemUtils {
      */
     public static boolean isItemStackOption(@NotNull final String material) {
         return material.toLowerCase(Locale.ROOT).startsWith(STACK_PREFIX);
+    }
+
+    /**
+     * Checks if the string starts with the substring "menu-". The check is case-insensitive.
+     * Such a material imports the item definition of another menu.
+     *
+     * @param material The string to check
+     * @return true if the string starts with "menu-", false otherwise
+     */
+    public static boolean isMenuItemOption(@NotNull final String material) {
+        return material.toLowerCase(Locale.ROOT).startsWith(MENU_ITEM_PREFIX);
     }
 
     /**

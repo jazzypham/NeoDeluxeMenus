@@ -39,6 +39,20 @@ public final class Constants {
     public static final String WATER_BOTTLE = "water_bottle";
 
     /**
+     * Prefix of a material that imports an item definition from another menu.
+     * The rest of the material is "menuName:itemKey".
+     */
+    public static final String MENU_ITEM_PREFIX = "menu-";
+    /**
+     * Separator between the menu name and the item key of a {@link #MENU_ITEM_PREFIX} material.
+     */
+    public static final String MENU_ITEM_SEPARATOR = ":";
+    /**
+     * How many times a menu item reference may point at another reference before we give up.
+     */
+    public static final int MENU_ITEM_MAX_DEPTH = 10;
+
+    /**
      * A map between a slot name and the method used to get that item from a player's inventory
      */
     public static final Map<String, Function<PlayerInventory, ItemStack>> INVENTORY_ITEM_ACCESSORS = ImmutableMap.<String, Function<PlayerInventory, ItemStack>>builder()
