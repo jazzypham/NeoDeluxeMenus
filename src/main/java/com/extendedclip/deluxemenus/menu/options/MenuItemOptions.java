@@ -55,15 +55,6 @@ public class MenuItemOptions {
     private final boolean hasLore;
     private final LoreAppendMode loreAppendMode;
 
-    private final String nbtString;
-    private final String nbtByte;
-    private final String nbtShort;
-    private final String nbtInt;
-    private final List<String> nbtStrings;
-    private final List<String> nbtBytes;
-    private final List<String> nbtShorts;
-    private final List<String> nbtInts;
-
     private final int slot;
     private final MenuItemLocation location;
     private final int priority;
@@ -113,14 +104,6 @@ public class MenuItemOptions {
         this.unbreakable = builder.unbreakable;
         this.displayNameHasPlaceholders = builder.displayNameHasPlaceholders;
         this.loreHasPlaceholders = builder.loreHasPlaceholders;
-        this.nbtString = builder.nbtString;
-        this.nbtByte = builder.nbtByte;
-        this.nbtShort = builder.nbtShort;
-        this.nbtInt = builder.nbtInt;
-        this.nbtStrings = builder.nbtStrings;
-        this.nbtBytes = builder.nbtBytes;
-        this.nbtShorts = builder.nbtShorts;
-        this.nbtInts = builder.nbtInts;
         this.slot = builder.slot;
         this.location = builder.location;
         this.priority = builder.priority;
@@ -260,38 +243,6 @@ public class MenuItemOptions {
         return Optional.ofNullable(loreAppendMode);
     }
 
-    public @NotNull Optional<String> nbtString() {
-        return Optional.ofNullable(nbtString);
-    }
-
-    public @NotNull Optional<String> nbtByte() {
-        return Optional.ofNullable(nbtByte);
-    }
-
-    public @NotNull Optional<String> nbtShort() {
-        return Optional.ofNullable(nbtShort);
-    }
-
-    public @NotNull Optional<String> nbtInt() {
-        return Optional.ofNullable(nbtInt);
-    }
-
-    public @NotNull List<String> nbtStrings() {
-        return nbtStrings;
-    }
-
-    public @NotNull List<String> nbtBytes() {
-        return nbtBytes;
-    }
-
-    public @NotNull List<String> nbtShorts() {
-        return nbtShorts;
-    }
-
-    public @NotNull List<String> nbtInts() {
-        return nbtInts;
-    }
-
     public int slot() {
         return slot;
     }
@@ -391,14 +342,6 @@ public class MenuItemOptions {
                 .bannerMeta(this.bannerMeta)
                 .itemFlags(this.itemFlags)
                 .unbreakable(this.unbreakable)
-                .nbtString(this.nbtString)
-                .nbtByte(this.nbtByte)
-                .nbtShort(this.nbtShort)
-                .nbtInt(this.nbtInt)
-                .nbtStrings(this.nbtStrings)
-                .nbtBytes(this.nbtBytes)
-                .nbtShorts(this.nbtShorts)
-                .nbtInts(this.nbtInts)
                 .slot(this.slot)
                 .location(this.location)
                 .priority(this.priority)
@@ -453,15 +396,6 @@ public class MenuItemOptions {
         private boolean loreHasPlaceholders;
         private boolean hasLore;
         private LoreAppendMode loreAppendMode;
-
-        private String nbtString;
-        private String nbtByte;
-        private String nbtShort;
-        private String nbtInt;
-        private List<String> nbtStrings = Collections.emptyList();
-        private List<String> nbtBytes = Collections.emptyList();
-        private List<String> nbtShorts = Collections.emptyList();
-        private List<String> nbtInts = Collections.emptyList();
 
         private int slot;
         private MenuItemLocation location = MenuItemLocation.TOP;
@@ -640,46 +574,6 @@ public class MenuItemOptions {
             if (hideUnbreakable) {
                 this.itemFlags.add(ItemFlag.HIDE_UNBREAKABLE);
             }
-            return this;
-        }
-
-        public MenuItemOptionsBuilder nbtString(final @Nullable String nbtString) {
-            this.nbtString = nbtString;
-            return this;
-        }
-
-        public MenuItemOptionsBuilder nbtByte(final @Nullable String nbtByte) {
-            this.nbtByte = nbtByte;
-            return this;
-        }
-
-        public MenuItemOptionsBuilder nbtShort(final @Nullable String nbtShort) {
-            this.nbtShort = nbtShort;
-            return this;
-        }
-
-        public MenuItemOptionsBuilder nbtInt(final @Nullable String nbtInt) {
-            this.nbtInt = nbtInt;
-            return this;
-        }
-
-        public MenuItemOptionsBuilder nbtStrings(final @NotNull List<String> nbtStrings) {
-            this.nbtStrings = nbtStrings;
-            return this;
-        }
-
-        public MenuItemOptionsBuilder nbtBytes(final @NotNull List<String> nbtBytes) {
-            this.nbtBytes = nbtBytes;
-            return this;
-        }
-
-        public MenuItemOptionsBuilder nbtShorts(final @NotNull List<String> nbtShorts) {
-            this.nbtShorts = nbtShorts;
-            return this;
-        }
-
-        public MenuItemOptionsBuilder nbtInts(final @NotNull List<String> nbtInts) {
-            this.nbtInts = nbtInts;
             return this;
         }
 

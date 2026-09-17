@@ -745,6 +745,41 @@ public class DeluxeMenusConfig {
     }
 
     /**
+     * Item options that wrote raw NBT tags through an NMS hook. Minecraft 1.20.5 replaced item NBT with data
+     * components, so these options no longer exist. They are only detected to tell the user they are being ignored.
+     */
+    private static final List<String> REMOVED_NBT_OPTIONS = List.of(
+            "nbt_string", "nbt_strings",
+            "nbt_byte", "nbt_bytes",
+            "nbt_short", "nbt_shorts",
+            "nbt_int", "nbt_ints"
+    );
+
+    /**
+     * Warns about every removed {@code nbt_*} option still present in an item's configuration section.
+     *
+     * @param c    the item's configuration section
+     * @param key  the item's config key, used for debug messages
+     * @param name the name of the menu the item belongs to, used for debug messages
+     */
+    private void warnAboutRemovedNbtOptions(
+            final @NotNull ConfigurationSection c,
+            final @NotNull String key,
+            final @NotNull String name
+    ) {
+        for (final String option : REMOVED_NBT_OPTIONS) {
+            if (!c.contains(option)) continue;
+
+            plugin.debug(
+                    DebugLevel.HIGHEST,
+                    Level.WARNING,
+                    "Option: " + option + " for item: " + key + " in menu: " + name + " has been removed. Raw NBT " +
+                            "was replaced by data components in Minecraft 1.20.5 and this option is now ignored!"
+            );
+        }
+    }
+
+    /**
      * Reads every option of a single menu item out of its own configuration section.
      * <p>
      * The section is read relative to itself rather than through a path into the menu file, so an item assembled in
@@ -785,20 +820,14 @@ public class DeluxeMenusConfig {
                 .hideAttributes(c.getBoolean("hide_attributes", false))
                 .hideUnbreakable(c.getBoolean("hide_unbreakable", false))
                 .hideEnchants(c.getBoolean("hide_enchantments", false))
-                .nbtString(c.getString("nbt_string", null))
-                .nbtByte(c.getString("nbt_byte", null))
-                .nbtShort(c.getString("nbt_short", null))
-                .nbtInt(c.getString("nbt_int", null))
-                .nbtStrings(c.getStringList("nbt_strings"))
-                .nbtBytes(c.getStringList("nbt_bytes"))
-                .nbtShorts(c.getStringList("nbt_shorts"))
-                .nbtInts(c.getStringList("nbt_ints"))
                 .priority(c.getInt("priority", 1))
                 .hideTooltip(c.getString("hide_tooltip", null))
                 .enchantmentGlintOverride(c.getString("enchantment_glint_override", null))
                 .rarity(c.getString("rarity", null))
                 .tooltipStyle(c.getString("tooltip_style", null))
                 .itemModel(c.getString("item_model", null));
+
+        warnAboutRemovedNbtOptions(c, key, name);
 
         if (c.contains("model_data_component") && c.isConfigurationSection("model_data_component")) {
             final ConfigurationSection modelDataComponent = c.getConfigurationSection("model_data_component");
