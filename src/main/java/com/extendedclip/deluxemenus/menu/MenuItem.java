@@ -46,7 +46,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.Base64;
-import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -54,6 +53,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Objects;
 import java.util.logging.Level;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static com.extendedclip.deluxemenus.utils.Constants.INVENTORY_ITEM_ACCESSORS;
@@ -61,6 +61,13 @@ import static com.extendedclip.deluxemenus.utils.Constants.PLACEHOLDER_PREFIX;
 import static com.extendedclip.deluxemenus.utils.Constants.STACK_PREFIX;
 
 public class MenuItem {
+
+    /**
+     * Splits a single lore line into several. Matches a real newline, a literal '\n', or the
+     * '&lt;n&gt;' tag (case-insensitive). A '&lt;n&gt;' escaped as '\&lt;n&gt;' is left alone, so
+     * MiniMessage renders it as plain text.
+     */
+    private static final Pattern LORE_LINE_BREAK = Pattern.compile("\n|\\\\n|(?<!\\\\)(?i:<n>)");
 
     private final DeluxeMenus plugin;
     private final MenuItemOptions options;
@@ -503,13 +510,15 @@ public class MenuItem {
         return plugin.getItemHook(hookName).map(itemHook -> itemHook.getItem(args));
     }
 
+    /**
+     * Resolves the placeholders and arguments of every lore line, then splits each one wherever
+     * {@link #LORE_LINE_BREAK} matches. The split runs after placeholders are replaced, so a
+     * placeholder whose value contains a line break expands into several lore lines.
+     */
     protected List<Component> getMenuItemLore(@NotNull final MenuHolder holder, @NotNull final List<String> lore) {
         return lore.stream()
                 .map(holder::setPlaceholdersAndArguments)
-                .map(line -> line.split("\n"))
-                .flatMap(Arrays::stream)
-                .map(line -> line.split("\\\\n"))
-                .flatMap(Arrays::stream)
+                .flatMap(LORE_LINE_BREAK::splitAsStream)
                 .map(StringUtils::parseItem)
                 .collect(Collectors.toList());
     }
