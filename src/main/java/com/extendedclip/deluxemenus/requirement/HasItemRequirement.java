@@ -5,7 +5,6 @@ import com.extendedclip.deluxemenus.hooks.ItemHook;
 import com.extendedclip.deluxemenus.menu.MenuHolder;
 import com.extendedclip.deluxemenus.requirement.wrappers.ItemWrapper;
 import com.extendedclip.deluxemenus.utils.StringUtils;
-import com.extendedclip.deluxemenus.utils.VersionHelper;
 import org.bukkit.Color;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
@@ -85,10 +84,10 @@ public class HasItemRequirement extends Requirement {
         ItemMeta metaToCheck = itemToCheck.getItemMeta();
         if (wrapper.isStrict()) {
             if (metaToCheck != null) {
-                if (VersionHelper.IS_CUSTOM_MODEL_DATA && metaToCheck.hasCustomModelData()) {
+                if (metaToCheck.hasCustomModelData()) {
                     return false;
                 }
-                if (VersionHelper.IS_CUSTOM_MODEL_DATA_COMPONENT && !isEmptyModelData(metaToCheck.getCustomModelDataComponent())) {
+                if (!isEmptyModelData(metaToCheck.getCustomModelDataComponent())) {
                     return false;
                 }
                 if (metaToCheck.hasLore()) return false;
@@ -100,21 +99,17 @@ public class HasItemRequirement extends Requirement {
                     return false;
                 }
 
-                if (VersionHelper.IS_CUSTOM_MODEL_DATA_COMPONENT) {
-                    if (!isEmptyModelData(wrapper.getCustomModelDataComponent())) {
-                        return false;
-                    }
+                if (!isEmptyModelData(wrapper.getCustomModelDataComponent())) {
+                    return false;
                 }
             }
 
             if (wrapper.getCustomData() != 0) {
-                if (VersionHelper.IS_CUSTOM_MODEL_DATA) {
-                    if (!metaToCheck.hasCustomModelData()) return false;
-                    if (metaToCheck.getCustomModelData() != wrapper.getCustomData()) return false;
-                }
+                if (!metaToCheck.hasCustomModelData()) return false;
+                if (metaToCheck.getCustomModelData() != wrapper.getCustomData()) return false;
             }
 
-            if (VersionHelper.IS_CUSTOM_MODEL_DATA_COMPONENT && !isEmptyModelData(wrapper.getCustomModelDataComponent()) && !itemModelComponentContains(holder, metaToCheck.getCustomModelDataComponent(), wrapper.getCustomModelDataComponent())) {
+            if (!isEmptyModelData(wrapper.getCustomModelDataComponent()) && !itemModelComponentContains(holder, metaToCheck.getCustomModelDataComponent(), wrapper.getCustomModelDataComponent())) {
                 return false;
             }
 

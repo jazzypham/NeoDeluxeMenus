@@ -9,7 +9,6 @@ import com.extendedclip.deluxemenus.menu.options.CustomModelDataComponent;
 import com.extendedclip.deluxemenus.utils.DebugLevel;
 import com.extendedclip.deluxemenus.utils.ItemUtils;
 import com.extendedclip.deluxemenus.utils.StringUtils;
-import com.extendedclip.deluxemenus.utils.VersionHelper;
 import com.google.common.collect.ImmutableMultimap;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Color;
@@ -264,7 +263,7 @@ public class MenuItem {
             return itemStack;
         }
 
-        if (VersionHelper.IS_CUSTOM_MODEL_DATA && this.options.customModelData().isPresent()) {
+        if (this.options.customModelData().isPresent()) {
             try {
                 final int modelData = Integer.parseInt(holder.setPlaceholdersAndArguments(this.options.customModelData().get()));
                 itemMeta.setCustomModelData(modelData);
@@ -272,7 +271,7 @@ public class MenuItem {
             }
         }
 
-        if (VersionHelper.IS_CUSTOM_MODEL_DATA_COMPONENT && this.options.customModelDataComponent().isPresent()) {
+        if (this.options.customModelDataComponent().isPresent()) {
             itemMeta.setCustomModelDataComponent(parseCustomModelDataComponent(this.options.customModelDataComponent().get(), itemMeta.getCustomModelDataComponent(), holder));
         }
 
@@ -311,40 +310,36 @@ public class MenuItem {
             itemMeta.setUnbreakable(true);
         }
 
-        if (VersionHelper.HAS_DATA_COMPONENTS) {
-            if (this.options.hideTooltip().isPresent()) {
-                String hideTooltip = holder.setPlaceholdersAndArguments(this.options.hideTooltip().get());
-                itemMeta.setHideTooltip(Boolean.parseBoolean(hideTooltip));
-            }
-            if (this.options.enchantmentGlintOverride().isPresent()) {
-                String enchantmentGlintOverride = holder.setPlaceholdersAndArguments(this.options.enchantmentGlintOverride().get());
-                itemMeta.setEnchantmentGlintOverride(Boolean.parseBoolean(enchantmentGlintOverride));
-            }
-            if (this.options.rarity().isPresent()) {
-                String rarity = holder.setPlaceholdersAndArguments(this.options.rarity().get());
-                try {
-                    itemMeta.setRarity(ItemRarity.valueOf(rarity.toUpperCase()));
-                } catch (IllegalArgumentException e) {
-                    plugin.debug(
-                            DebugLevel.HIGHEST,
-                            Level.WARNING,
-                            "Rarity " + rarity + " is not a valid!"
-                    );
-                }
+        if (this.options.hideTooltip().isPresent()) {
+            String hideTooltip = holder.setPlaceholdersAndArguments(this.options.hideTooltip().get());
+            itemMeta.setHideTooltip(Boolean.parseBoolean(hideTooltip));
+        }
+        if (this.options.enchantmentGlintOverride().isPresent()) {
+            String enchantmentGlintOverride = holder.setPlaceholdersAndArguments(this.options.enchantmentGlintOverride().get());
+            itemMeta.setEnchantmentGlintOverride(Boolean.parseBoolean(enchantmentGlintOverride));
+        }
+        if (this.options.rarity().isPresent()) {
+            String rarity = holder.setPlaceholdersAndArguments(this.options.rarity().get());
+            try {
+                itemMeta.setRarity(ItemRarity.valueOf(rarity.toUpperCase()));
+            } catch (IllegalArgumentException e) {
+                plugin.debug(
+                        DebugLevel.HIGHEST,
+                        Level.WARNING,
+                        "Rarity " + rarity + " is not a valid!"
+                );
             }
         }
-        if (VersionHelper.HAS_TOOLTIP_STYLE) {
-            if (this.options.tooltipStyle().isPresent()) {
-                NamespacedKey tooltipStyle = NamespacedKey.fromString(holder.setPlaceholdersAndArguments(this.options.tooltipStyle().get()));
-                if (tooltipStyle != null) itemMeta.setTooltipStyle(tooltipStyle);
-            }
-            if (this.options.itemModel().isPresent()) {
-                NamespacedKey itemModel = NamespacedKey.fromString(holder.setPlaceholdersAndArguments(this.options.itemModel().get()));
-                if (itemModel != null) itemMeta.setItemModel(itemModel);
-            }
+        if (this.options.tooltipStyle().isPresent()) {
+            NamespacedKey tooltipStyle = NamespacedKey.fromString(holder.setPlaceholdersAndArguments(this.options.tooltipStyle().get()));
+            if (tooltipStyle != null) itemMeta.setTooltipStyle(tooltipStyle);
+        }
+        if (this.options.itemModel().isPresent()) {
+            NamespacedKey itemModel = NamespacedKey.fromString(holder.setPlaceholdersAndArguments(this.options.itemModel().get()));
+            if (itemModel != null) itemMeta.setItemModel(itemModel);
         }
 
-        if (VersionHelper.HAS_ARMOR_TRIMS && ItemUtils.hasArmorMeta(itemStack)) {
+        if (ItemUtils.hasArmorMeta(itemStack)) {
             final Optional<String> trimMaterialName = this.options.trimMaterial();
             final Optional<String> trimPatternName = this.options.trimPattern();
 
@@ -476,7 +471,7 @@ public class MenuItem {
             for (final ItemFlag flag : this.options.itemFlags()) {
                 itemMeta.addItemFlags(flag);
 
-                if (flag == ItemFlag.HIDE_ATTRIBUTES && VersionHelper.HAS_DATA_COMPONENTS) {
+                if (flag == ItemFlag.HIDE_ATTRIBUTES) {
                     itemMeta.setAttributeModifiers(ImmutableMultimap.of());
                 }
             }

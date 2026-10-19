@@ -38,9 +38,12 @@ import com.extendedclip.deluxemenus.requirement.wrappers.ItemWrapper;
 import com.extendedclip.deluxemenus.utils.DebugLevel;
 import com.extendedclip.deluxemenus.utils.ItemUtils;
 import com.extendedclip.deluxemenus.utils.LocationUtils;
+import com.extendedclip.deluxemenus.utils.RegistryUtils;
 import com.extendedclip.deluxemenus.utils.VersionHelper;
 import com.google.common.base.Enums;
 import com.google.common.primitives.Ints;
+import io.papermc.paper.registry.RegistryAccess;
+import io.papermc.paper.registry.RegistryKey;
 import org.bukkit.DyeColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -177,7 +180,7 @@ public class DeluxeMenusConfig {
         FileConfiguration c = plugin.getConfig();
 
         c.options().header(
-                "DeluxeMenus " + plugin.getDescription().getVersion() + " main configuration file" +
+                "DeluxeMenus " + plugin.getPluginMeta().getVersion() + " main configuration file" +
                 "\n" +
                 "\nA full wiki on how to use this plugin can be found at:" +
                 "\nhttps://wiki.helpch.at/helpchat-plugins/deluxemenus" +
@@ -867,10 +870,8 @@ public class DeluxeMenusConfig {
 
         addDamageOptionToBuilder(c, key, name, builder);
 
-        if (VersionHelper.HAS_ARMOR_TRIMS) {
-            builder.trimMaterial(c.getString("trim_material", null));
-            builder.trimPattern(c.getString("trim_pattern", null));
-        }
+        builder.trimMaterial(c.getString("trim_material", null));
+        builder.trimPattern(c.getString("trim_pattern", null));
 
         if (c.contains("banner_meta") && c.isList("banner_meta")) {
 
@@ -890,15 +891,25 @@ public class DeluxeMenusConfig {
                 }
 
                 final DyeColor color;
-                final PatternType type;
 
                 try {
                     color = DyeColor.valueOf(metaParts[0].toUpperCase());
-                    type = PatternType.valueOf(metaParts[1].toUpperCase());
                 } catch (IllegalArgumentException exception) {
                     plugin.debug(DebugLevel.HIGHEST, Level.WARNING, "Banner Meta for item: " + key + ", meta entry: " + e + " is invalid! Skipping this entry!");
 
                     plugin.printStacktrace("Banner Meta for item: " + key + ", meta entry: " + e + " is invalid! Skipping this entry!", exception);
+                    continue;
+                }
+
+                // Resolved through the registry rather than the deprecated PatternType.valueOf, which
+                // also lets namespaced keys such as 'minecraft:stripe_bottom' be used.
+                final PatternType type = RegistryUtils.byNameOrKey(
+                        RegistryAccess.registryAccess().getRegistry(RegistryKey.BANNER_PATTERN),
+                        metaParts[1]
+                );
+
+                if (type == null) {
+                    plugin.debug(DebugLevel.HIGHEST, Level.WARNING, "Banner Meta for item: " + key + ", meta entry: " + e + " is invalid! Skipping this entry!");
                     continue;
                 }
 
@@ -1457,10 +1468,6 @@ public class DeluxeMenusConfig {
                     break;
                 case HAS_META:
                 case DOES_NOT_HAVE_META:
-                    if (!VersionHelper.IS_PDC_VERSION) {
-                        plugin.debug(DebugLevel.HIGHEST, Level.WARNING, "Has Meta requirement is not available for your server version!");
-                        break;
-                    }
                     if (c.contains(rPath + ".key") && c.contains(rPath + ".meta_type") && c.contains(rPath + ".value")) {
                         String metaKey = c.getString(rPath + ".key");
                         invert = type == RequirementType.DOES_NOT_HAVE_META;

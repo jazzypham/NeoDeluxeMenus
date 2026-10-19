@@ -30,7 +30,6 @@ dependencies {
     compileOnly(libs.paper)
 
     compileOnly(libs.vault)
-    compileOnly(libs.authlib)
 
     compileOnly(libs.headdb)
     compileOnly(libs.headdb.api)
@@ -61,6 +60,12 @@ java {
 }
 
 tasks {
+    withType<JavaCompile> {
+        // Built with the JDK 25 toolchain, but emits Java 21 bytecode so the jar still loads on
+        // 1.21.11 servers running Java 21.
+        options.release.set(21)
+    }
+
     shadowJar {
         relocate("org.objectweb.asm", "com.extendedclip.deluxemenus.libs.asm")
         relocate("org.openjdk.nashorn", "com.extendedclip.deluxemenus.libs.nashorn")

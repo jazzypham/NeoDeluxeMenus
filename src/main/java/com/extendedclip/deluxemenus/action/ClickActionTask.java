@@ -67,7 +67,7 @@ public class ClickActionTask extends BukkitRunnable {
 
         switch (actionType) {
             case META:
-                if (!VersionHelper.IS_PDC_VERSION || plugin.getPersistentMetaHandler() == null) {
+                if (plugin.getPersistentMetaHandler() == null) {
                     plugin.debug(DebugLevel.HIGHEST, Level.INFO, "Meta action not supported on this server version.");
                     break;
                 }
@@ -436,30 +436,14 @@ public class ClickActionTask extends BukkitRunnable {
 
                 if (!executable.contains(" ")) {
                     if (!isRaw) {
-                        try {
-                            sound = SoundUtils.getSound(executable.toUpperCase());
-                        } catch (final IllegalArgumentException exception) {
-                            plugin.printStacktrace(
-                                    "Sound name given for sound action: " + executable + ", is not a valid sound!",
-                                    exception
-                            );
-                            break;
-                        }
+                        sound = SoundUtils.getSound(executable);
                     }
                 } else {
                     String[] parts = executable.split(" ", 3);
                     soundName = parts[0];
 
                     if (!isRaw) {
-                        try {
-                            sound = SoundUtils.getSound(parts[0].toUpperCase());
-                        } catch (final IllegalArgumentException exception) {
-                            plugin.printStacktrace(
-                                    "Sound name given for sound action: " + parts[0] + ", is not a valid sound!",
-                                    exception
-                            );
-                            break;
-                        }
+                        sound = SoundUtils.getSound(parts[0]);
                     }
 
                     if (parts.length == 3) {

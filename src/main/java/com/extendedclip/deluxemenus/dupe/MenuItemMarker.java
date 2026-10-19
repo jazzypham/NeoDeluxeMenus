@@ -3,8 +3,6 @@ package com.extendedclip.deluxemenus.dupe;
 import com.extendedclip.deluxemenus.DeluxeMenus;
 import com.extendedclip.deluxemenus.dupe.marker.ItemMarker;
 import com.extendedclip.deluxemenus.dupe.marker.impl.PDCMenuItemMarker;
-import com.extendedclip.deluxemenus.dupe.marker.impl.UnavailableMenuItemMarker;
-import com.extendedclip.deluxemenus.utils.VersionHelper;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
@@ -18,7 +16,6 @@ public class MenuItemMarker implements ItemMarker {
 
     private final static String DEFAULT_MARK = "DM";
     private final static Pattern MARK_PATTERN = Pattern.compile("^[a-zA-Z0-9]+$");
-    private final static boolean SUPPORTS_PDC = VersionHelper.IS_PDC_VERSION;
     private final ItemMarker marker;
     private final String mark;
 
@@ -28,11 +25,7 @@ public class MenuItemMarker implements ItemMarker {
 
     public MenuItemMarker(@NotNull final DeluxeMenus plugin, @NotNull final String mark) {
         this.mark = DEFAULT_MARK.equals(mark) || MARK_PATTERN.matcher(mark).matches() ? mark : DEFAULT_MARK;
-        if (SUPPORTS_PDC) {
-            marker = new PDCMenuItemMarker(plugin, this.mark);
-        } else {
-            marker = new UnavailableMenuItemMarker();
-        }
+        marker = new PDCMenuItemMarker(plugin, this.mark);
     }
 
     @Override
